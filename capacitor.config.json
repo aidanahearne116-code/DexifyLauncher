@@ -1,0 +1,11 @@
+{
+  "appId": "com.dexify.launcher",
+  "appName": "DexifyLauncher",
+  "webDir": "www",
+  "backgroundColor": "#080B0F",
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}

@@ -1,0 +1,754 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DexifyLauncher</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+  :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  html{scroll-padding-top:env(safe-area-inset-top,0px)}
+  [hidden]:not([hidden=until-found i]){display:none!important}
+  :root {
+    --bg: #080B0F;
+    --frame: #10151B;
+    --card: #19212A;
+    --line: #26313D;
+    --fg: #E9EEF3;
+    --muted: #8A97A6;
+    --accent: #FF6A3D;
+    --on-accent: #1C0B04;
+    --danger: #FF8585;
+    --scrim: rgba(4, 7, 10, .62);
+    --shadow: 0 24px 60px rgba(0, 0, 0, .55);
+    --display: 'Chakra Petch', 'Segoe UI', system-ui, sans-serif;
+    --body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #E2E7EC;
+      --frame: #F6F8FA;
+      --card: #FFFFFF;
+      --line: #D3DBE3;
+      --fg: #11171D;
+      --muted: #566371;
+      --accent: #D9440F;
+      --on-accent: #FFFFFF;
+      --danger: #B3261E;
+      --scrim: rgba(17, 23, 29, .38);
+      --shadow: 0 24px 60px rgba(34, 48, 64, .22);
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #E2E7EC;
+    --frame: #F6F8FA;
+    --card: #FFFFFF;
+    --line: #D3DBE3;
+    --fg: #11171D;
+    --muted: #566371;
+    --accent: #D9440F;
+    --on-accent: #FFFFFF;
+    --danger: #B3261E;
+    --scrim: rgba(17, 23, 29, .38);
+    --shadow: 0 24px 60px rgba(34, 48, 64, .22);
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 15px/1.4 var(--body);
+    padding-block: 12px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .stage { height: 100%; display: grid; place-items: center; min-height: 0; }
+  .frame {
+    position: relative;
+    aspect-ratio: 9 / 16;
+    height: min(100%, calc((100vw - 32px) * 16 / 9));
+    background: var(--frame);
+    border: 1px solid var(--line);
+    border-radius: 30px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .main { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+  .top { padding: 18px 20px 6px; display: flex; flex-direction: column; gap: 2px; }
+  .bar { display: flex; align-items: center; justify-content: space-between; }
+  .clock { font: 600 13px var(--display); letter-spacing: .08em; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .edit-btn {
+    background: none; border: 1px solid var(--line); border-radius: 999px;
+    padding: 5px 14px; font: 600 12px var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--fg);
+  }
+  .edit-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  h1 { margin: 10px 0 0; font: 700 34px/1.05 var(--display); letter-spacing: -.01em; text-wrap: balance; }
+  .sub { margin: 4px 0 0; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+  .grid-wrap { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 20px 12px; }
+  .grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 14px; }
+  .cell { position: relative; min-width: 0; }
+  .tile { display: flex; flex-direction: column; align-items: center; gap: 8px; text-decoration: none; color: inherit; min-width: 0; }
+  .icon {
+    width: 100%; max-width: 96px; aspect-ratio: 1; border-radius: 24%;
+    display: grid; place-items: center;
+    background: linear-gradient(150deg, hsl(var(--h) 70% 50%), hsl(var(--h2) 66% 30%));
+    color: #fff; font: 700 28px var(--display); letter-spacing: .02em; text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 6px 14px rgba(0, 0, 0, .28);
+    transition: transform .12s ease;
+  }
+  .icon { overflow: hidden; }
+  .icon.has-img { background: none; box-shadow: none; }
+  .icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .tile:active .icon { transform: scale(.94); }
+  .name { font-weight: 600; font-size: 13px; text-align: center; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; width: 100%; }
+  .meta { font: 500 10.5px var(--display); letter-spacing: .04em; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+  .rm {
+    position: absolute; top: -7px; right: calc(50% - 56px);
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid var(--frame); background: var(--danger); color: #fff;
+    display: none; place-items: center; padding: 0;
+  }
+  .editing .rm { display: grid; }
+  .editing .icon { outline: 2px dashed var(--muted); outline-offset: 3px; }
+
+  .empty { margin: 40px 0; text-align: center; color: var(--muted); }
+  .empty strong { display: block; color: var(--fg); font: 600 18px var(--display); margin-bottom: 4px; }
+
+  .foot { padding: 10px 20px 20px; }
+  .add-btn {
+    width: 100%; height: 54px; border: 0; border-radius: 18px;
+    background: var(--accent); color: var(--on-accent);
+    font: 700 16px var(--display); letter-spacing: .06em; text-transform: uppercase;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .add-btn:active { transform: scale(.985); }
+
+  .toast {
+    position: absolute; left: 16px; right: 16px; bottom: 88px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 10px 12px 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    font-size: 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
+  }
+  .toast span { min-width: 0; overflow-wrap: anywhere; }
+  .toast button { background: none; border: 0; color: var(--accent); font: 700 13px var(--display); letter-spacing: .08em; text-transform: uppercase; padding: 6px 8px; }
+
+  .scrim { position: absolute; inset: 0; background: var(--scrim); display: flex; align-items: flex-end; }
+  .sheet {
+    width: 100%; background: var(--card); border-top: 1px solid var(--line);
+    border-radius: 26px 26px 0 0; padding: 20px 20px 22px; display: flex; flex-direction: column; gap: 14px;
+    max-height: 100%; overflow-y: auto;
+  }
+  .sheet h2 { margin: 0; font: 700 22px var(--display); }
+  .field { display: flex; flex-direction: column; gap: 6px; border: 0; padding: 0; margin: 0; min-width: 0; }
+  .field label, .field legend { font: 600 12px var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0; }
+  .field input[type="text"] {
+    width: 100%; height: 48px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--frame); padding: 0 14px; font-size: 16px;
+  }
+  .hint { margin: 0; font-size: 12.5px; color: var(--muted); }
+  .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+  .swatches label { position: relative; text-transform: none; letter-spacing: 0; }
+  .swatches input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .swatches span {
+    display: block; width: 34px; height: 34px; border-radius: 10px;
+    background: linear-gradient(150deg, hsl(var(--h) 70% 50%), hsl(var(--h2) 66% 30%));
+  }
+  .swatches input:checked + span { outline: 2px solid var(--fg); outline-offset: 2px; }
+  .swatches input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .err { margin: 0; color: var(--danger); font-size: 13px; font-weight: 600; }
+  .actions { display: flex; gap: 10px; }
+  .actions button { flex: 1; height: 48px; border-radius: 14px; border: 1px solid var(--line); background: none; font: 700 14px var(--display); letter-spacing: .06em; text-transform: uppercase; }
+  .actions .go { background: var(--accent); border-color: var(--accent); color: var(--on-accent); flex: 1.4; }
+
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--frame); border: 1px solid var(--line); border-radius: 14px; }
+  .seg label { position: relative; }
+  .seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .seg span { display: block; text-align: center; padding: 9px 6px; border-radius: 10px; font: 600 13px var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .seg input:checked + span { background: var(--accent); color: var(--on-accent); }
+  .seg input:focus-visible + span { outline: 2px solid var(--fg); outline-offset: 2px; }
+
+  .tabs { display: flex; gap: 8px; padding: 10px 20px 0; overflow-x: auto; scrollbar-width: none; flex: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: none; border: 1px solid var(--line); background: none; border-radius: 999px; padding: 7px 16px; font: 600 13px var(--display); letter-spacing: .06em; white-space: nowrap; color: var(--muted); }
+  .tab[aria-selected="true"] { background: var(--fg); border-color: var(--fg); color: var(--frame); }
+  .editing .tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .tab.plus { color: var(--accent); border-style: dashed; }
+  .actions .del { color: var(--danger); }
+  @media (prefers-reduced-motion: reduce) { .icon { transition: none; } }
+</style>
+</head><body>
+
+<div class="stage">
+  <div class="frame" id="frame">
+    <div class="main" id="main">
+      <header class="top">
+        <div class="bar">
+          <span class="clock" id="clock">--:--</span>
+          <button class="edit-btn" id="editBtn" type="button" aria-pressed="false">Edit</button>
+        </div>
+        <h1>DexifyLauncher</h1>
+        <p class="sub" id="sub"></p>
+      </header>
+      <div class="tabs" id="tabs" role="tablist" aria-label="Pages"></div>
+      <div class="grid-wrap">
+        <ul class="grid" id="grid"></ul>
+        <div class="empty" id="empty" hidden><strong>Nothing here yet</strong>Tap Add app to put your first game on this page.</div>
+      </div>
+      <div class="foot">
+        <button class="add-btn" id="addBtn" type="button">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M9 2v14M2 9h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+          Add app
+        </button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" hidden><span id="toastMsg"></span><button type="button" id="undoBtn">Undo</button></div>
+
+    <div class="scrim" id="scrim" hidden>
+      <form class="sheet" id="form" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" novalidate>
+        <h2 id="sheetTitle">Add app</h2>
+        <div class="seg" role="radiogroup" aria-label="App type">
+          <label><input type="radio" name="kind" value="web" checked><span>Website</span></label>
+          <label><input type="radio" name="kind" value="android"><span>Installed app</span></label>
+        </div>
+        <div class="field">
+          <label for="fName">Name</label>
+          <input type="text" id="fName" autocomplete="off" placeholder="GeForce NOW" maxlength="40">
+        </div>
+        <div class="field" id="urlField">
+          <label for="fUrl">Web address</label>
+          <input type="text" id="fUrl" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off" placeholder="play.geforcenow.com">
+          <p class="hint">Opens in your browser, so websites and cloud-gaming pages work best.</p>
+        </div>
+        <div class="field" id="pkgField" hidden>
+          <label for="fPkg">Package name or Play Store link</label>
+          <input type="text" id="fPkg" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off" placeholder="com.supercell.clashofclans">
+          <p class="hint">Android only. Install the APK on your phone first, then enter its package name (like com.example.game). Play Store games can use the Share link instead. The icon is read from your phone (or Google Play as a fallback). This may not work from every browser.</p>
+        </div>
+        <fieldset class="field">
+          <legend>Tile colour</legend>
+          <div class="swatches" id="swatches"></div>
+        </fieldset>
+        <p class="err" id="err" role="alert" hidden></p>
+        <div class="actions">
+          <button type="button" id="cancelBtn">Cancel</button>
+          <button type="submit" class="go">Add to launcher</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="scrim" id="pscrim" hidden>
+      <form class="sheet" id="pform" role="dialog" aria-modal="true" aria-labelledby="pTitle" novalidate>
+        <h2 id="pTitle">New page</h2>
+        <div class="field">
+          <label for="pName">Page name</label>
+          <input type="text" id="pName" autocomplete="off" placeholder="Cloud gaming" maxlength="20">
+        </div>
+        <p class="err" id="perr" role="alert" hidden></p>
+        <div class="actions">
+          <button type="button" id="pDel" class="del" hidden>Delete</button>
+          <button type="button" id="pCancel">Cancel</button>
+          <button type="submit" class="go" id="pGo">Add page</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var KEY = 'my-game-launcher-v1';
+  var HUES = [14, 36, 140, 172, 204, 254, 300, 340];
+  var SEED = [
+    { name: 'Xbox Cloud Gaming', url: 'https://www.xbox.com/play', hue: 140 },
+    { name: 'GeForce NOW', url: 'https://play.geforcenow.com/', hue: 172 },
+    { name: 'Amazon Luna', url: 'https://luna.amazon.com/', hue: 254 },
+    { name: 'Twitch', url: 'https://www.twitch.tv/', hue: 300 },
+    { name: 'YouTube Gaming', url: 'https://www.youtube.com/gaming', hue: 14 }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var grid = $('grid'), empty = $('empty'), sub = $('sub'), clock = $('clock');
+  var editBtn = $('editBtn'), addBtn = $('addBtn'), main = $('main'), frame = $('frame');
+  var scrim = $('scrim'), form = $('form'), fName = $('fName'), fUrl = $('fUrl'), err = $('err');
+  var toast = $('toast'), toastMsg = $('toastMsg'), undoBtn = $('undoBtn'), swatches = $('swatches');
+
+  var editing = false, chosenHue = HUES[0], lastRemoved = null, toastTimer = null, kind = 'web';
+  var fPkg = $('fPkg');
+
+  function uid() {
+    try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID().slice(0, 12); } catch (e) {}
+    return 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  var state = { pages: null, cur: 0, updated: 0 };
+  function mk(name, apps) { return { id: uid(), name: name, apps: apps }; }
+  function normalize0(d) {
+    if (!d) return null;
+    if (Array.isArray(d.pages) && d.pages.length && d.pages.some(function (p) { return p && Array.isArray(p.apps); })) {
+      return { pages: d.pages, cur: Math.min(d.cur || 0, d.pages.length - 1), updated: d.updated || 0 };
+    }
+    if (Array.isArray(d.pages) && d.pages.length) {
+      var pages = d.pages.map(function (p) { return { id: p.id, name: p.name, apps: [] }; });
+      (Array.isArray(d.apps) ? d.apps : []).forEach(function (a) {
+        var dest = pages.filter(function (p) { return p.id === a.page; })[0] || pages[0];
+        var c = {}; for (var k in a) if (k !== 'page') c[k] = a[k];
+        dest.apps.push(c);
+      });
+      return { pages: pages, cur: 0, updated: d.updated || 0 };
+    }
+    if (Array.isArray(d.apps)) return { pages: [{ id: 'games', name: 'Games', apps: d.apps }], cur: 0, updated: d.updated || 0 };
+    return null;
+  }
+  function clean(r) {
+    if (!r || !Array.isArray(r.pages)) return null;
+    var pages = r.pages.filter(function (p) { return p && typeof p === 'object'; }).map(function (p, i) {
+      var apps = (Array.isArray(p.apps) ? p.apps : []).filter(function (a) { return a && typeof a.url === 'string'; }).map(function (a) {
+        var o = { id: a.id || uid(), name: String(a.name || 'App'), url: a.url, hue: isFinite(+a.hue) ? +a.hue : 14, launches: +a.launches || 0, last: +a.last || 0 };
+        if (typeof a.icon === 'string') o.icon = a.icon;
+        if (a.iconTried) o.iconTried = true;
+        return o;
+      });
+      return { id: String(p.id || ('p' + i)), name: String(p.name || 'Page'), apps: apps };
+    });
+    if (!pages.length) return null;
+    return { pages: pages, cur: Math.max(0, Math.min(+r.cur || 0, pages.length - 1)), updated: Number(r.updated) || 0 };
+  }
+  function normalize(d) { try { return clean(normalize0(d)); } catch (e) { return null; } }
+  /* Remote copy is flat (pages + apps tagged with a page id) so it stays shallow. */
+  function toRemote() {
+    var apps = [];
+    state.pages.forEach(function (p) {
+      p.apps.forEach(function (a) { var c = {}; for (var k in a) c[k] = a[k]; c.page = p.id; apps.push(c); });
+    });
+    return { pages: state.pages.map(function (p) { return { id: p.id, name: p.name }; }), apps: apps, updated: state.updated || Date.now() };
+  }
+  function loadLocal() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) return normalize(JSON.parse(raw));
+    } catch (e) {}
+    return null;
+  }
+  function saveLocal() { try { localStorage.setItem(KEY, JSON.stringify({ pages: state.pages, cur: state.cur, updated: state.updated || 0 })); } catch (e) {} }
+  function cp() { return state.pages[Math.max(0, Math.min(state.cur, state.pages.length - 1))]; }
+
+  var init0 = loadLocal();
+  if (init0) { state.pages = init0.pages; state.cur = init0.cur; state.updated = init0.updated; }
+  else {
+    state.pages = [mk('Games', SEED.map(function (s) {
+      return { id: uid(), name: s.name, url: s.url, hue: s.hue, launches: 0, last: 0 };
+    }))];
+  }
+
+  /* ---- Cross-device sync (private per-person store), optional ---- */
+  var docRef = null, timer = null, writing = false, dirty = false, pushed = false;
+  function busy() { return !!timer || writing || dirty; }
+  function queueRemote() {
+    if (!docRef) return;
+    clearTimeout(timer);
+    timer = setTimeout(function () { timer = null; flush(); }, 400);
+  }
+  function flush() {
+    if (!docRef) return;
+    if (writing) { dirty = true; return; }
+    writing = true;
+    Promise.resolve().then(function () { return docRef.set(toRemote()); }).catch(function (e) {
+      if (e && (e.code === 'invalid_argument' || e.code === 'revoked')) docRef = null;
+    }).then(function () {
+      writing = false;
+      if (dirty) { dirty = false; flush(); }
+    });
+  }
+  function persist() { state.updated = Date.now(); saveLocal(); queueRemote(); }
+
+  function initRemote() {
+    if (!(window.claude && typeof window.claude.use === 'function')) return;
+    Promise.all([window.claude.use('db'), window.claude.use('user')]).then(function (r) {
+      var dbm = r[0], user = r[1];
+      if (!dbm || !user) return null;
+      return user.id().then(function (id) {
+        if (!id) return null;
+        var ref = dbm.doc('data/users/' + id + '/launcher');
+        ref.onSnapshot(function (snap) {
+          docRef = ref;
+          try {
+          if (!snap.exists || snap.metadata.hasPendingWrites || busy()) return;
+          var d = normalize(snap.data());
+          if (!d) return;
+          if ((d.updated || 0) < (state.updated || 0)) { if (!pushed) { pushed = true; queueRemote(); } return; }
+          if (JSON.stringify(d.pages) === JSON.stringify(state.pages)) return;
+          state.pages = d.pages; state.updated = d.updated || 0; state.cur = Math.min(state.cur, d.pages.length - 1);
+          saveLocal();
+          render();
+          } catch (e) {}
+        }, function () { docRef = null; });
+      });
+    }).catch(function () {});
+  }
+
+  /* ---- Helpers ---- */
+  function initials(name) {
+    var w = name.trim().split(/\s+/).filter(Boolean);
+    if (!w.length) return '?';
+    if (w.length === 1) return w[0].charAt(0).toUpperCase();
+    return (w[0].charAt(0) + w[1].charAt(0)).toUpperCase();
+  }
+  function rel(ts) {
+    var s = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+    if (s < 60) return 'Just now';
+    var m = Math.floor(s / 60); if (m < 60) return m + 'm ago';
+    var h = Math.floor(m / 60); if (h < 24) return h + 'h ago';
+    return Math.floor(h / 24) + 'd ago';
+  }
+  function paint(el, hue) {
+    el.style.setProperty('--h', hue);
+    el.style.setProperty('--h2', (hue + 24) % 360);
+  }
+  function normalizeUrl(raw) {
+    var s = (raw || '').trim();
+    if (!s) return null;
+    if (!/^[a-z][a-z0-9+.\-]*:\/\//i.test(s)) s = 'https://' + s;
+    try {
+      var u = new URL(s);
+      if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+      if (u.hostname.indexOf('.') === -1) return null;
+      return u.href;
+    } catch (e) { return null; }
+  }
+  function hostName(url) {
+    try {
+      var h = new URL(url).hostname.replace(/^(www|play|app)\./, '').split('.')[0];
+      return h.charAt(0).toUpperCase() + h.slice(1);
+    } catch (e) { return 'App'; }
+  }
+  function parsePackage(raw) {
+    var s = (raw || '').trim();
+    if (!s) return null;
+    var m = s.match(/[?&]id=([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)+)/);
+    if (m) return m[1];
+    return /^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+$/.test(s) ? s : null;
+  }
+  function intentUrl(pkg) {
+    var fb = encodeURIComponent('https://play.google.com/store/apps/details?id=' + pkg);
+    return 'intent://#Intent;package=' + pkg + ';S.browser_fallback_url=' + fb + ';end';
+  }
+  function pkgName(pkg) {
+    var last = pkg.split('.').pop();
+    return last.charAt(0).toUpperCase() + last.slice(1);
+  }
+  function setKind(k) {
+    kind = k;
+    $('urlField').hidden = k !== 'web';
+    $('pkgField').hidden = k !== 'android';
+    err.hidden = true;
+  }
+  form.querySelectorAll('input[name="kind"]').forEach(function (r) {
+    r.addEventListener('change', function () { if (r.checked) setKind(r.value); });
+  });
+  function sorted() {
+    return cp().apps.slice().sort(function (a, b) { return (b.last || 0) - (a.last || 0); });
+  }
+
+  /* ---- Render ---- */
+  function render() {
+    grid.textContent = '';
+    renderTabs();
+    var list = sorted();
+    list.forEach(function (app) {
+      var li = document.createElement('li'); li.className = 'cell';
+      var a = document.createElement('a'); a.className = 'tile';
+      a.href = app.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      var icon = document.createElement('div'); icon.className = 'icon'; paint(icon, app.hue);
+      icon.textContent = initials(app.name);
+      var ik = pkgFromUrl(app.url);
+      if (ik && !(ik in NR)) wantNative(ik);
+      var isrc = (ik && NI[ik]) || app.icon;
+      if (isrc) {
+        var im = document.createElement('img'); im.alt = ''; im.decoding = 'async'; im.referrerPolicy = 'no-referrer'; im.src = isrc; icon.classList.add('has-img');
+        im.addEventListener('error', function () { im.remove(); icon.classList.remove('has-img'); icon.textContent = initials(app.name); });
+        icon.textContent = ''; icon.appendChild(im);
+      }
+      var name = document.createElement('div'); name.className = 'name'; name.textContent = app.name;
+      var meta = document.createElement('div'); meta.className = 'meta';
+      meta.textContent = app.launches ? rel(app.last) + ' · ' + app.launches + '×' : 'Not played yet';
+      a.append(icon, name, meta);
+      a.addEventListener('click', function (ev) {
+        if (editing) { ev.preventDefault(); return; }
+        app.launches = (app.launches || 0) + 1;
+        app.last = Date.now();
+        persist();
+        setTimeout(render, 300);
+      });
+      var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm';
+      rm.setAttribute('aria-label', 'Remove ' + app.name);
+      rm.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+      rm.addEventListener('click', function () { removeApp(app.id); });
+      li.append(a, rm);
+      grid.appendChild(li);
+    });
+    empty.hidden = list.length > 0;
+    var total = cp().apps.reduce(function (n, a) { return n + (a.launches || 0); }, 0);
+    var c = cp().apps.length;
+    sub.textContent = c + (c === 1 ? ' game' : ' games') + ' · ' + total + (total === 1 ? ' launch' : ' launches');
+  }
+
+  /* ---- Pages ---- */
+  var tabs = $('tabs'), pscrim = $('pscrim'), pform = $('pform'), pName = $('pName'), perr = $('perr');
+  var pDel = $('pDel'), pTitle = $('pTitle'), pGo = $('pGo'), editingPage = null, delArmed = false;
+  var gw = document.querySelector('.grid-wrap');
+
+  function renderTabs() {
+    tabs.textContent = '';
+    state.pages.forEach(function (p, i) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'tab';
+      b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(i === state.cur));
+      b.textContent = p.name + (editing && i === state.cur ? ' ✎' : '');
+      b.addEventListener('click', function () {
+        if (i === state.cur) { if (editing) openPageSheet(p); } else setPage(i);
+      });
+      tabs.appendChild(b);
+    });
+    var plus = document.createElement('button'); plus.type = 'button'; plus.className = 'tab plus';
+    plus.textContent = '+ Page'; plus.setAttribute('aria-label', 'Add page');
+    plus.addEventListener('click', function () { openPageSheet(null); });
+    tabs.appendChild(plus);
+    var sel = tabs.querySelector('[aria-selected="true"]');
+    if (sel && sel.scrollIntoView) { try { sel.scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) {} }
+  }
+  function setPage(i) {
+    if (i < 0 || i >= state.pages.length || i === state.cur) return;
+    state.cur = i; saveLocal(); render(); gw.scrollTop = 0;
+  }
+  function openPageSheet(p) {
+    editingPage = p; delArmed = false; pform.reset(); perr.hidden = true;
+    pTitle.textContent = p ? 'Edit page' : 'New page';
+    pGo.textContent = p ? 'Save' : 'Add page';
+    pDel.hidden = !(p && state.pages.length > 1);
+    pDel.textContent = 'Delete';
+    pName.value = p ? p.name : '';
+    main.inert = true; pscrim.hidden = false; pName.focus();
+  }
+  function closePageSheet() { pscrim.hidden = true; main.inert = false; }
+  $('pCancel').addEventListener('click', closePageSheet);
+  pscrim.addEventListener('click', function (ev) { if (ev.target === pscrim) closePageSheet(); });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !pscrim.hidden) closePageSheet(); });
+  pform.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var name = pName.value.trim();
+    if (!name) { perr.textContent = 'Give the page a name.'; perr.hidden = false; pName.focus(); return; }
+    if (editingPage) { editingPage.name = name; }
+    else { state.pages.push(mk(name, [])); state.cur = state.pages.length - 1; }
+    closePageSheet();
+    try { persist(); } catch (e) {}
+    try { render(); } catch (e) { showErr(e); }
+    gw.scrollTop = 0;
+  });
+  pDel.addEventListener('click', function () {
+    if (!editingPage) return;
+    var n = editingPage.apps.length;
+    if (n && !delArmed) { delArmed = true; pDel.textContent = 'Tap again: delete ' + n + (n === 1 ? ' app' : ' apps'); return; }
+    var idx = state.pages.indexOf(editingPage);
+    if (idx < 0) return;
+    state.pages.splice(idx, 1);
+    state.cur = Math.min(state.cur, state.pages.length - 1);
+    persist(); render(); closePageSheet();
+    showToast('Page deleted', false);
+  });
+
+  var sx = 0, sy = 0, st = 0;
+  gw.addEventListener('touchstart', function (e) { var t = e.touches[0]; sx = t.clientX; sy = t.clientY; st = Date.now(); }, { passive: true });
+  gw.addEventListener('touchend', function (e) {
+    var t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6 && Date.now() - st < 600) setPage(state.cur + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+
+  /* Native icons: read from the phone itself (APK only), kept in memory so the synced data stays small. */
+  var NI = {}, NR = {}, niTimer = null;
+  function nativeGet(pkg) {
+    var C = window.Capacitor;
+    if (!C || !C.isNativePlatform || !C.isNativePlatform()) return Promise.reject(new Error('web'));
+    var pl = C.Plugins && C.Plugins.AppIcon;
+    if (pl && pl.get) return pl.get({ package: pkg });
+    if (C.nativePromise) return C.nativePromise('AppIcon', 'get', { package: pkg });
+    return Promise.reject(new Error('no plugin'));
+  }
+  function wantNative(pkg) {
+    NR[pkg] = 1;
+    nativeGet(pkg).then(function (r) {
+      if (!r || !r.icon) return;
+      NI[pkg] = r.icon;
+      clearTimeout(niTimer);
+      niTimer = setTimeout(function () { try { render(); } catch (e) {} }, 60);
+    }).catch(function () {});
+  }
+
+  /* App icons: looked up from the Google Play listing (works in the APK; the web preview blocks it and keeps initials). */
+  function playInfo(pkg) {
+    return fetch('https://play.google.com/store/apps/details?id=' + encodeURIComponent(pkg) + '&hl=en').then(function (r) {
+      if (r.status === 404) return { icon: null, title: null };
+      if (!r.ok) throw new Error('http ' + r.status);
+      return r.text().then(function (h) {
+        var m = h.match(/<img[^>]+itemprop="image"[^>]*?src="([^"]+)"/i) || h.match(/<img[^>]+src="([^"]+)"[^>]*itemprop="image"/i) || h.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i);
+        var t = h.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i);
+        var icon = m ? m[1].replace(/&amp;/g, '&') : null;
+        if (icon && !/^https:\/\/[a-z0-9.-]+\.(googleusercontent|ggpht)\.com\//i.test(icon)) icon = null;
+        if (icon) icon = icon.replace(/=[^=\/]*$/, '') + '=s192';
+        var title = t ? t[1].replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/\s+-\s+Apps on Google Play.*$/i, '').trim() : null;
+        return { icon: icon, title: title };
+      });
+    });
+  }
+  function fetchIcon(app, pkg, autoName) {
+    playInfo(pkg).then(function (info) {
+      app.iconTried = true;
+      if (info.icon) app.icon = info.icon;
+      if (autoName && info.title && app.name === pkgName(pkg)) app.name = info.title.slice(0, 40);
+      persist(); render();
+    }).catch(function () {});
+  }
+  function pkgFromUrl(u) { var m = (u || '').match(/^intent:.*package=([^;]+);/); return m ? m[1] : null; }
+
+  function showErr(e) { try { showToast('Error: ' + ((e && e.message) || e), false); } catch (x) {} }
+  window.addEventListener('error', function (ev) { showErr(ev.error || ev.message); });
+
+  /* ---- Actions ---- */
+  function showToast(msg, withUndo) {
+    toastMsg.textContent = msg;
+    undoBtn.hidden = !withUndo;
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.hidden = true; lastRemoved = null; }, 6000);
+  }
+  function removeApp(id) {
+    var i = cp().apps.findIndex(function (a) { return a.id === id; });
+    if (i < 0) return;
+    lastRemoved = { app: cp().apps[i], index: i, page: cp().id };
+    cp().apps.splice(i, 1);
+    persist(); render();
+    showToast(lastRemoved.app.name + ' removed', true);
+  }
+  undoBtn.addEventListener('click', function () {
+    if (!lastRemoved) return;
+    var pg = state.pages.filter(function (p) { return p.id === lastRemoved.page; })[0] || cp();
+    pg.apps.splice(Math.min(lastRemoved.index, pg.apps.length), 0, lastRemoved.app);
+    lastRemoved = null; toast.hidden = true;
+    persist(); render();
+  });
+
+  editBtn.addEventListener('click', function () {
+    editing = !editing;
+    frame.classList.toggle('editing', editing);
+    editBtn.setAttribute('aria-pressed', String(editing));
+    editBtn.textContent = editing ? 'Done' : 'Edit';
+    renderTabs();
+  });
+
+  HUES.forEach(function (h, i) {
+    var l = document.createElement('label');
+    var r = document.createElement('input'); r.type = 'radio'; r.name = 'hue'; r.value = h;
+    r.setAttribute('aria-label', 'Colour ' + (i + 1));
+    if (i === 0) r.checked = true;
+    var s = document.createElement('span'); paint(s, h);
+    r.addEventListener('change', function () { chosenHue = h; });
+    l.append(r, s);
+    swatches.appendChild(l);
+  });
+
+  function openSheet() {
+    form.reset(); setKind('web');
+    chosenHue = HUES[Math.floor(Math.random() * HUES.length)];
+    var radios = swatches.querySelectorAll('input');
+    radios.forEach(function (r) { r.checked = Number(r.value) === chosenHue; });
+    main.inert = true;
+    scrim.hidden = false;
+    fName.focus();
+  }
+  function closeSheet() {
+    scrim.hidden = true;
+    main.inert = false;
+    addBtn.focus();
+  }
+  addBtn.addEventListener('click', openSheet);
+  $('cancelBtn').addEventListener('click', closeSheet);
+  scrim.addEventListener('click', function (ev) { if (ev.target === scrim) closeSheet(); });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !scrim.hidden) closeSheet(); });
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var url, name, pkgId = null, autoName = false;
+    if (kind === 'android') {
+      var pkg = parsePackage(fPkg.value);
+      if (!pkg) {
+        err.textContent = 'Paste the game’s Play Store link or its package name, such as com.supercell.clashofclans.';
+        err.hidden = false; fPkg.focus(); return;
+      }
+      url = intentUrl(pkg);
+      name = fName.value.trim(); autoName = !name; if (autoName) name = pkgName(pkg); pkgId = pkg;
+    } else {
+      url = normalizeUrl(fUrl.value);
+      if (!url) {
+        err.textContent = 'Enter a web address such as play.geforcenow.com.';
+        err.hidden = false; fUrl.focus(); return;
+      }
+      name = fName.value.trim() || hostName(url);
+    }
+    var newApp = { id: uid(), name: name, url: url, hue: chosenHue, launches: 0, last: 0 };
+    cp().apps.push(newApp);
+    closeSheet();
+    try { persist(); } catch (e) {}
+    try { render(); } catch (e) { showErr(e); }
+    showToast(name + ' added', false);
+    if (pkgId) fetchIcon(newApp, pkgId, autoName);
+    if (pkgId && autoName) nativeGet(pkgId).then(function (r) {
+      if (r && r.label && newApp.name === pkgName(pkgId)) { newApp.name = r.label.slice(0, 40); persist(); render(); }
+    }).catch(function () {});
+    var g = document.querySelector('.grid-wrap');
+    if (g) g.scrollTop = g.scrollHeight;
+  });
+
+  function tick() {
+    try { clock.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }); } catch (e) {}
+  }
+  tick(); setInterval(tick, 20000);
+
+  render();
+  initRemote();
+  state.pages.forEach(function (p) {
+    p.apps.forEach(function (a) { var k = pkgFromUrl(a.url); if (k && !a.icon && !a.iconTried) fetchIcon(a, k, false); });
+  });
+})();
+</script>
+<script>
+/* Native shim: inside the APK, open tiles via the Android launcher plugin */
+(function () {
+  var C = window.Capacitor;
+  if (!C || !C.isNativePlatform || !C.isNativePlatform()) return;
+  function pkgOf(u) { var m = (u || '').match(/^intent:.*package=([^;]+);/); return m ? m[1] : null; }
+  document.addEventListener('click', function (ev) {
+    var a = ev.target.closest && ev.target.closest('a.tile');
+    if (!a) return;
+    if (document.getElementById('frame').classList.contains('editing')) return;
+    ev.preventDefault();
+    var L = C.Plugins && C.Plugins.AppLauncher;
+    if (!L) return;
+    var u = a.getAttribute('href'), p = pkgOf(u);
+    L.openUrl({ url: p || u }).catch(function () {
+      if (p) L.openUrl({ url: 'market://details?id=' + p }).catch(function () {});
+    });
+  }, true);
+})();
+</script>
+</body></html>
